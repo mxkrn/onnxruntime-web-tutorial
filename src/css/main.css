@@ -5,3 +5,8 @@ img {
 .wrapper {
   max-height: 100vh;
 }
+
+.loading {
+  width: 100px;
+  height: auto;
+}

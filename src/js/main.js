@@ -9,7 +9,9 @@ const DIMS = [1, 3, WIDTH, WIDTH];
 const MAX_LENGTH = DIMS[0] * DIMS[1] * DIMS[2] * DIMS[3];
 const MAX_SIGNED_VALUE = 255.0;
 const classes = require("./imagenet_classes.json").data;
-let imageData;
+
+let predictedClass;
+let isRunning = false;
 
 // ======================================================================
 // DOM Elements
@@ -23,6 +25,7 @@ document.getElementById("file-in").onchange = function (evt) {
     files = target.files;
 
   if (FileReader && files && files.length) {
+    isRunning = true;
     var fileReader = new FileReader();
     fileReader.onload = () => onLoadImage(fileReader);
     fileReader.readAsDataURL(files[0]);
@@ -30,6 +33,15 @@ document.getElementById("file-in").onchange = function (evt) {
 };
 
 const target = document.getElementById("target");
+window.setInterval(function() {
+  if (isRunning) {
+    target.innerHTML = `<div class="align-self-start"><img src="src/images/loading.gif" class="loading"/>`;
+  } else if (predictedClass !== "undefined") {
+    target.innerHTML = `<h3>I think it's a ${predictedClass}!`;
+  } else {
+    target.innerHTML = ``;
+  }
+}, 500)
 
 // ======================================================================
 // Functions
@@ -105,8 +117,11 @@ async function run(inputTensor) {
     // feed inputs and run
     const results = await session.run(feeds);
     const [maxValue, maxIndex] = argMax(results.output1.data);
-    target.innerHTML = `${classes[maxIndex]}`;
+
+    predictedClass = `${classes[maxIndex]}`;
+    isRunning = false;
   } catch (e) {
     console.error(e);
+    isRunning = false;
   }
 }
