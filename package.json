@@ -2,11 +2,12 @@
   "name": "onnxruntime-web-tutorial",
   "version": "1.0.0",
   "description": "Run ONNX models in the browser",
-  "main": "main.js",
+  "main": "src/js/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx webpack",
-    "serve": "npm run build && npx light-server -s . -p 8888"
+    "serve": "npm run build && npx light-server -s . -p 8888",
+    "format": "npx prettier --write src"
   },
   "author": "Max Kraan",
   "license": "MIT",
