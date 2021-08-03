@@ -1,15 +1,16 @@
 # Building a browser-native machine learning app using ONNX Runtime Web
 
-Deploying machine learning models outside of a *Python* environment used to be difficult. When the target platform is the browser, the defacto standard for serving predictions has been an API call to a server-side inference engine. For many different reasons, server-side inference engines are slowly moving out of the vogue and machine learning models are more often being deployed natively. `Tensorflow` has done a good job at supporting this movement by providing cross-platform APIs, however none of us want to be married to a single ecosystem. 
+Deploying machine learning models outside of a _Python_ environment used to be difficult. When the target platform is the browser, the defacto standard for serving predictions has been an API call to a server-side inference engine. For many different reasons, server-side inference engines are slowly moving out of the vogue and machine learning models are more often being deployed natively. `Tensorflow` has done a good job at supporting this movement by providing cross-platform APIs, however none of us want to be married to a single ecosystem.
 
-In comes the <a href="https://www.onnxruntime.ai/">Open Neural Network Exchange</a> (ONNX) project, driven by *Microsoft*, which has been seeing massive development efforts and is slowly reaching a stable state. It's now easier than ever to deploy machine-learning models, trained using your machine-learning framework of choice, on a number of platforms including *C, C++, Javascript, Java*, and several others, with hardware acceleration out of the box. In April this year, `onnxruntime-web` was introduced (see this <a href="https://github.com/microsoft/onnxruntime/pull/7394">Pull Request</a>). `onnxruntime-web` uses *WebAssembly* to compile the `onnxruntime` inference engine to run *ONNX* models in the browser. It's about *WebAssembly* time starts to flex its muscles, especially when paired with *WebGL* we suddenly have GPU-powered machine learning in the browser, pretty cool.
+In comes the <a href="https://www.onnxruntime.ai/">Open Neural Network Exchange</a> (ONNX) project, driven by _Microsoft_, which has been seeing massive development efforts and is slowly reaching a stable state. It's now easier than ever to deploy machine-learning models, trained using your machine-learning framework of choice, on a number of platforms including _C, C++, Javascript, Java_, and several others, with hardware acceleration out of the box. In April this year, `onnxruntime-web` was introduced (see this <a href="https://github.com/microsoft/onnxruntime/pull/7394">Pull Request</a>). `onnxruntime-web` uses _WebAssembly_ to compile the `onnxruntime` inference engine to run _ONNX_ models in the browser. It's about _WebAssembly_ time starts to flex its muscles, especially when paired with _WebGL_ we suddenly have GPU-powered machine learning in the browser, pretty cool.
 
-In this tutorial we will dive into `onnxruntime-web` by deploying a pre-trained *PyTorch* model to the browser. We will be using AlexNet as our deployment target. AlexNet has been trained as an image classifier on the <a href="https://www.image-net.org/">ImageNet dataset</a>, so we will be building an image classifier - nothing better than re-inventing the wheel. In part 1 of this tutorial, we will focus on the browser by deploying a simple static site allowing users to classify their images using *AlexNet*. 
+In this tutorial we will dive into `onnxruntime-web` by deploying a pre-trained _PyTorch_ model to the browser. We will be using AlexNet as our deployment target. AlexNet has been trained as an image classifier on the <a href="https://www.image-net.org/">ImageNet dataset</a>, so we will be building an image classifier - nothing better than re-inventing the wheel. In part 1 of this tutorial, we will focus on the browser by deploying a simple static site allowing users to classify their images using _AlexNet_.
+
 <!-- In part 2, we will see how we can integrate our inference engine into real-life Javascript apps based on frameworks like *React*, *React Native*, and *Node.js*. -->
 
 ## Prerequisite
 
-You will need a trained machine-learning model exported as an *ONNX* binary protobuf file. There's many ways to achieve this using a number of different deep-learning frameworks. For the sake of this tutorial, I will be using the exported model from the *AlexNet* example in the <a href="https://pytorch.org/docs/stable/onnx.html#example-end-to-end-alexnet-from-pytorch-to-onnx">PyTorch documentation</a>, the python code snippet below will help you generate your own model. You can also follow the linked documentation to export your own *PyTorch* model. If you're coming from *Tensorflow*, <a href="https://docs.microsoft.com/en-us/windows/ai/windows-ml/tutorials/tensorflow-convert-model">this tutorial</a> will help you with exporting your model to *ONNX*. Lastly, *ONNX* doesn't just pride itself on cross-platform deployment, but also in allowing exports for a multitude of deep-learning frameworks, so those of you using another exotic framework should be able to find support for exporting to *ONNX* in the relevant docs.
+You will need a trained machine-learning model exported as an _ONNX_ binary protobuf file. There's many ways to achieve this using a number of different deep-learning frameworks. For the sake of this tutorial, I will be using the exported model from the _AlexNet_ example in the <a href="https://pytorch.org/docs/stable/onnx.html#example-end-to-end-alexnet-from-pytorch-to-onnx">PyTorch documentation</a>, the python code snippet below will help you generate your own model. You can also follow the linked documentation to export your own _PyTorch_ model. If you're coming from _Tensorflow_, <a href="https://docs.microsoft.com/en-us/windows/ai/windows-ml/tutorials/tensorflow-convert-model">this tutorial</a> will help you with exporting your model to _ONNX_. Lastly, _ONNX_ doesn't just pride itself on cross-platform deployment, but also in allowing exports for a multitude of deep-learning frameworks, so those of you using another exotic framework should be able to find support for exporting to _ONNX_ in the relevant docs.
 
 ```python:onnx_model.py
 import torch
@@ -22,10 +23,10 @@ input_names = ["input1"]
 output_names = ["output1"]
 
 torch.onnx.export(
-  model, 
-  dummy_input, 
-  "alexnet.onnx", 
-  verbose=True, 
+  model,
+  dummy_input,
+  "alexnet.onnx",
+  verbose=True,
   input_names=input_names,
   output_names=output_names
 )
@@ -35,11 +36,11 @@ Running this file creates a file, `alexnet.onnx`, a binary protobuf file which c
 
 ## ONNX Runtime Web
 
-> *ONNX Runtime Web* is a Javacript library for running *ONNX* models on the browser and on *Node.js*. ONNX Runtime Web has adopted *WebAssembly* and *WebGL* technologies for providing an optimized ONNX model inference runtime for both CPUs and GPUs.
+> _ONNX Runtime Web_ is a Javacript library for running _ONNX_ models on the browser and on _Node.js_. ONNX Runtime Web has adopted _WebAssembly_ and _WebGL_ technologies for providing an optimized ONNX model inference runtime for both CPUs and GPUs.
 
-Sounds like our cup of tea. 
+Sounds like our cup of tea.
 
-The official package is hosted on *npm* under the name `onnxruntime-web`. When using a bundler or working server-side, this package can be installed using `npm install`. However, it's also possible to deliver the code via a CDN using a script tag. The bundling process is a bit more involved so we will start with the script tag approach and come back to using the *npm* package later.
+The official package is hosted on _npm_ under the name `onnxruntime-web`. When using a bundler or working server-side, this package can be installed using `npm install`. However, it's also possible to deliver the code via a CDN using a script tag. The bundling process is a bit more involved so we will start with the script tag approach and come back to using the _npm_ package later.
 
 ### Runtime
 
@@ -91,14 +92,14 @@ Congratulations! You're now running a machine learning model natively in the bro
 
 ### Bundled deployment
 
-Next we will use `webpack` to bundle our dependencies as would be the case if we want to deploy the model in a *Javascript* app powered by frameworks like *React* or *Vue*. Usually bundling is a relatively simple procedure, however `onnxruntime-web` requires a slightly more involved `webpack` configuration because *WebAssembly* is used to provide the natively assembled runtime. The following steps are based on the examples provided by the official <a href="https://github.com/microsoft/onnxruntime-inference-examples/tree/main/js/quick-start_onnxruntime-web-bundler">*ONNX* documentation</a>.
+Next we will use `webpack` to bundle our dependencies as would be the case if we want to deploy the model in a _Javascript_ app powered by frameworks like _React_ or _Vue_. Usually bundling is a relatively simple procedure, however `onnxruntime-web` requires a slightly more involved `webpack` configuration because _WebAssembly_ is used to provide the natively assembled runtime. The following steps are based on the examples provided by the official <a href="https://github.com/microsoft/onnxruntime-inference-examples/tree/main/js/quick-start_onnxruntime-web-bundler">_ONNX_ documentation</a>.
 
-Assuming you've already started an *npm* project (using `npm init`), we first install the dependencies.
+Assuming you've already started an _npm_ project (using `npm init`), we first install the dependencies.
 
 1. `npm install onnxruntime-web`
 2. `npm install -D webpack webpack-cli copy-webpack`
 
-We then need to update `main.js` to use the new package instead of loading the `onnxruntime-web` module via a CDN. This is done by updating `main.js` with a one-liner at the start of the script. 
+We then need to update `main.js` to use the new package instead of loading the `onnxruntime-web` module via a CDN. This is done by updating `main.js` with a one-liner at the start of the script.
 
 `const ort = require('onnxruntime-web');`
 
@@ -132,8 +133,9 @@ module.exports = () => {
 ```
 
 Finally, before reloading the live server, we will update `index.html`:
+
 1. Remove the script tag to load `ort.min.js` from the CDN
-2. Load the code dependencies from `bundle.min.js` (which contains all our dependencies bundled and minified) instead of `main.js` 
+2. Load the code dependencies from `bundle.min.js` (which contains all our dependencies bundled and minified) instead of `main.js`
 
 `index.html` should now look something like this.
 
@@ -153,29 +155,34 @@ Finally, before reloading the live server, we will update `index.html`:
 
 Let's put this model to work and setup our image classifier.
 
-To start, will need some utility functions to load, resize, and display the image. We will use the `canvas` object for this. Additionally, image classification systems typically have lots of magic built into the pre-processing pipelines, this is quite trivial to implement in *Python* using frameworks like `numpy`, unfortunately this is not the case *Javascript*. It follows that we will have to implement our pre-processing from scratch to transform our image data into the correct tensor format.
+To start, will need some utility functions to load, resize, and display the image. We will use the `canvas` object for this. Additionally, image classification systems typically have lots of magic built into the pre-processing pipelines, this is quite trivial to implement in _Python_ using frameworks like `numpy`, unfortunately this is not the case _Javascript_. It follows that we will have to implement our pre-processing from scratch to transform our image data into the correct tensor format.
 
 ### 1. DOM Elements
 
- To start, let's create the necessary HTML elements.
+To start, let's create the necessary HTML elements.
 
 1. File input
+
 ```html
 <label for="fileIn"><h2>What am I?</h2></label>
-<input type="file" id="file-in" name="file-in">
+<input type="file" id="file-in" name="file-in" />
 ```
+
 2. Image displays (we will display both the original and rescaled image)
+
 ```html
 <img id="input-image" class="input-image"></img>
 <img id="scaled-image" class="scaled-image"></img>
 ```
 
 3. Display classification
+
 ```html
 <h3 id="target"></h3>
 ```
 
 ### 2. Image load and display
+
 We want to load an image from file and display it - moving to `main.js`, we will get the file input element and use `FileReader` to read the data into memory. Then, the image data will be passed to `handleImage` which will draw the image using the `canvas` context.
 
 ```js
@@ -187,20 +194,20 @@ document.getElementById("file-in").onchange = function (evt) {
     files = target.files;
 
   if (FileReader && files && files.length) {
-      var fileReader = new FileReader();
-      fileReader.onload = () => onLoadImage(fileReader);
-      fileReader.readAsDataURL(files[0]);
+    var fileReader = new FileReader();
+    fileReader.onload = () => onLoadImage(fileReader);
+    fileReader.readAsDataURL(files[0]);
   }
-}
+};
 
 function onLoadImage(fileReader) {
-    var img = document.getElementById("input-image");
-    img.onload = () => handleImage(img);
-    img.src = fileReader.result;
+  var img = document.getElementById("input-image");
+  img.onload = () => handleImage(img);
+  img.src = fileReader.result;
 }
 
 function handleImage(img) {
-  ctx.drawImage(img, 0, 0)
+  ctx.drawImage(img, 0, 0);
 }
 ```
 
@@ -213,7 +220,7 @@ To resize and extract image data, we will use the `canvas` context again. Let's 
 ```js
 function processImage(img, width) {
   const canvas = document.createElement("canvas"),
-    ctx = canvas.getContext("2d")
+    ctx = canvas.getContext("2d");
 
   // resize image
   canvas.width = width;
@@ -240,7 +247,7 @@ Finally, let's implement a function called `imageDataToTensor` which applies the
 ```js
 function imageDataToTensor(data, dims) {
   // 2. transpose from [224, 224, 3] -> [3, 224, 224]
-  const [R, G, B] = [[], [], []]
+  const [R, G, B] = [[], [], []];
   for (let i = 0; i < data.length; i += 4) {
     R.push(data[i]);
     G.push(data[i + 1]);
@@ -250,7 +257,8 @@ function imageDataToTensor(data, dims) {
   const transposedData = R.concat(G).concat(B);
 
   // convert to float32
-  let i, l = transposedData.length; // length, we need this for the loop
+  let i,
+    l = transposedData.length; // length, we need this for the loop
   const float32Data = new Float32Array(3 * 224 * 224); // create the Float32Array for output
   for (i = 0; i < l; i++) {
     float32Data[i] = transposedData[i] / 255.0; // convert to float
@@ -283,10 +291,10 @@ function argMax(arr) {
   let max = arr[0];
   let maxIndex = 0;
   for (var i = 1; i < arr.length; i++) {
-      if (arr[i] > max) {
-          maxIndex = i;
-          max = arr[i];
-      }
+    if (arr[i] > max) {
+      maxIndex = i;
+      max = arr[i];
+    }
   }
   return [max, maxIndex];
 }
@@ -299,7 +307,7 @@ const classes = require("./imagenet_classes.json").data;
 
 async function run(inputTensor) {
   try {
-    const session = await ort.InferenceSession.create('./alexnet.onnx');
+    const session = await ort.InferenceSession.create("./alexnet.onnx");
 
     const feeds = { input1: inputTensor };
     const results = await session.run(feeds);
@@ -307,15 +315,12 @@ async function run(inputTensor) {
     const [maxValue, maxIndex] = argMax(results.output1.data);
     target.innerHTML = `${classes[maxIndex]}`;
   } catch (e) {
-    console.error(e);  // non-fatal error handling
+    console.error(e); // non-fatal error handling
   }
 }
 ```
 
 ## Conclusion
-
-
-
 
 ### Styling (Bonus)
 
@@ -331,6 +336,6 @@ Secondly, let's create a file called `main.css` in the working directory and add
 
 And from there on it's just jazz.
 
-You can re-visit the full code repository and styling in the <a href="https://github.com/mxkrn/onnxruntime-web-tutorial">project repository</a>. If you want to take your deployment to the next level, have a look at <a href="#">Part 2</a> where we will go into deploying your model to *Node.js*, *React*, or *React Native*.
+You can re-visit the full code repository and styling in the <a href="https://github.com/mxkrn/onnxruntime-web-tutorial">project repository</a>. If you want to take your deployment to the next level, have a look at <a href="#">Part 2</a> where we will go into deploying your model to _Node.js_, _React_, or _React Native_.
 
 Thank you for reading!

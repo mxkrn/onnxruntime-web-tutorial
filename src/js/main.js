@@ -23,11 +23,11 @@ document.getElementById("file-in").onchange = function (evt) {
     files = target.files;
 
   if (FileReader && files && files.length) {
-      var fileReader = new FileReader();
-      fileReader.onload = () => onLoadImage(fileReader);
-      fileReader.readAsDataURL(files[0]);
+    var fileReader = new FileReader();
+    fileReader.onload = () => onLoadImage(fileReader);
+    fileReader.readAsDataURL(files[0]);
   }
-}
+};
 
 const target = document.getElementById("target");
 
@@ -36,9 +36,9 @@ const target = document.getElementById("target");
 // ======================================================================
 
 function onLoadImage(fileReader) {
-    var img = document.getElementById("input-image");
-    img.onload = () => handleImage(img, WIDTH);
-    img.src = fileReader.result;
+  var img = document.getElementById("input-image");
+  img.onload = () => handleImage(img, WIDTH);
+  img.src = fileReader.result;
 }
 
 function handleImage(img, targetWidth) {
@@ -50,7 +50,7 @@ function handleImage(img, targetWidth) {
 
 function processImage(img, width) {
   const canvas = document.createElement("canvas"),
-    ctx = canvas.getContext("2d")
+    ctx = canvas.getContext("2d");
 
   canvas.width = width;
   canvas.height = canvas.width * (img.height / img.width);
@@ -61,9 +61,9 @@ function processImage(img, width) {
 }
 
 function imageDataToTensor(data, dims) {
-  // 1. filter out alpha 
+  // 1. filter out alpha
   // 2. transpose from [224, 224, 3] -> [3, 224, 224]
-  const [R, G, B] = [[], [], []]
+  const [R, G, B] = [[], [], []];
   for (let i = 0; i < data.length; i += 4) {
     R.push(data[i]);
     G.push(data[i + 1]);
@@ -73,7 +73,8 @@ function imageDataToTensor(data, dims) {
   const transposedData = R.concat(G).concat(B);
 
   // convert to float32
-  let i, l = transposedData.length; // length, we need this for the loop
+  let i,
+    l = transposedData.length; // length, we need this for the loop
   const float32Data = new Float32Array(MAX_LENGTH); // create the Float32Array for output
   for (i = 0; i < l; i++) {
     float32Data[i] = transposedData[i] / MAX_SIGNED_VALUE; // convert to float
@@ -88,17 +89,17 @@ function argMax(arr) {
   let max = arr[0];
   let maxIndex = 0;
   for (var i = 1; i < arr.length; i++) {
-      if (arr[i] > max) {
-          maxIndex = i;
-          max = arr[i];
-      }
+    if (arr[i] > max) {
+      maxIndex = i;
+      max = arr[i];
+    }
   }
   return [max, maxIndex];
 }
 
 async function run(inputTensor) {
   try {
-    const session = await ort.InferenceSession.create('src/assets/model.onnx');
+    const session = await ort.InferenceSession.create("src/assets/model.onnx");
     const feeds = { input1: inputTensor };
 
     // feed inputs and run
